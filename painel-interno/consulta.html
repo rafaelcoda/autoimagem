@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Apoio | Painel de Consulta de Avaliações</title>
+<style>
+  :root{
+    --apoio-blue:#0b3d66;
+    --apoio-blue-light:#1a5a8f;
+    --apoio-green:#4caf7d;
+    --bg:#f4f6f8;
+    --card:#ffffff;
+    --text:#1f2937;
+    --muted:#6b7280;
+    --border:#e2e6ea;
+    --danger:#c0392b;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);}
+  header{background:var(--apoio-blue);color:#fff;padding:24px 16px;text-align:center;}
+  header h1{margin:0;font-size:1.3rem;font-weight:600;}
+  header p{margin:4px 0 0;font-size:.85rem;opacity:.85;}
+  .wrap{max-width:900px;margin:0 auto;padding:24px 16px 64px;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+  .card h2{font-size:1.05rem;color:var(--apoio-blue);margin-top:0;border-bottom:2px solid var(--apoio-green);padding-bottom:8px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:640px){.grid2,.grid3{grid-template-columns:1fr;}}
+  label{display:block;font-size:.82rem;font-weight:600;margin-bottom:5px;color:var(--muted);}
+  input[type=text],input[type=email],input[type=date],select{
+    width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:6px;font-size:.92rem;font-family:inherit;background:#fff;
+  }
+  .field{margin-bottom:14px;}
+  button{padding:12px 20px;background:var(--apoio-green);color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;}
+  button:disabled{opacity:.6;cursor:not-allowed;}
+  .hint{font-size:.8rem;color:var(--muted);margin:-6px 0 14px;}
+  .status{margin-top:10px;font-size:.88rem;}
+  .status.err{color:var(--danger);}
+  .status.ok{color:var(--apoio-green);}
+  .resultado{border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:14px;}
+  .resultado h3{margin:0 0 4px;font-size:1rem;color:var(--apoio-blue);}
+  .badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:700;margin-left:6px;}
+  .badge.ok{background:#e6f7ee;color:var(--apoio-green);}
+  .badge.no{background:#fdeaea;color:var(--danger);}
+  .meta{font-size:.82rem;color:var(--muted);margin:2px 0;}
+  .traits{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-top:10px;}
+  .trait{font-size:.78rem;}
+  .trait .bar{background:var(--border);border-radius:4px;height:6px;margin-top:3px;position:relative;overflow:hidden;}
+  .trait .bar span{position:absolute;top:0;bottom:0;background:var(--apoio-blue-light);}
+  details{margin-top:10px;font-size:.85rem;}
+  details summary{cursor:pointer;color:var(--apoio-blue);font-weight:600;}
+  details .texto{white-space:pre-wrap;margin-top:8px;line-height:1.5;max-height:320px;overflow:auto;background:#fafbfc;padding:10px;border-radius:6px;}
+  .local-list{margin-top:8px;font-size:.82rem;}
+  .local-item{border-top:1px dashed var(--border);padding-top:8px;margin-top:8px;}
+  footer{text-align:center;font-size:.75rem;color:var(--muted);padding:20px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>APOIO — Painel de Consulta de Avaliações</h1>
+  <p>Uso interno · dados confidenciais</p>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <h2>Buscar avaliação</h2>
+    <p class="hint">Informe pelo menos um filtro. Prefira nome, CPF ou e-mail — buscas só por cidade/UF podem ser grandes demais e falhar.</p>
+    <form id="formBusca">
+      <div class="grid3">
+        <div class="field"><label for="nome">Nome</label><input type="text" id="nome" name="nome"></div>
+        <div class="field"><label for="cpf">CPF</label><input type="text" id="cpf" name="cpf"></div>
+        <div class="field"><label for="email">E-mail</label><input type="email" id="email" name="email"></div>
+      </div>
+      <div class="grid3">
+        <div class="field"><label for="telefone">Telefone</label><input type="text" id="telefone" name="telefone"></div>
+        <div class="field"><label for="cidade">Cidade</label><input type="text" id="cidade" name="cidade"></div>
+        <div class="field"><label for="uf">UF</label><input type="text" id="uf" name="uf" maxlength="2"></div>
+      </div>
+      <div class="grid3">
+        <div class="field">
+          <label for="aprovado">Aprovado</label>
+          <select id="aprovado" name="aprovado">
+            <option value="">Qualquer</option>
+            <option value="true">Sim</option>
+            <option value="false">Não</option>
+          </select>
+        </div>
+        <div class="field"><label for="data_ini">Data início</label><input type="date" id="data_ini" name="data_ini"></div>
+        <div class="field"><label for="data_fim">Data fim</label><input type="date" id="data_fim" name="data_fim"></div>
+      </div>
+      <button type="submit" id="btnBuscar">Buscar</button>
+      <div class="status" id="statusMsg"></div>
+    </form>
+  </div>
+
+  <div id="resultados"></div>
+</div>
+
+<footer>Grupo Apoio — Painel interno de consulta</footer>
+
+<script>
+const CONSULTA_URL = "https://nyvudtxtwerwfvpirweu.supabase.co/functions/v1/autoimagem-consulta";
+
+const TRAIT_KEYS = [
+  ["comunicacao","Comunicação"],["autocontrole","Autocontrole"],["humildade","Humildade"],
+  ["metas","Foco em metas"],["negociacao","Negociação"],["organizacao","Organização"],
+  ["criatividade","Criatividade"],["persistencia","Persistência"],["resiliencia","Resiliência"],
+  ["lideranca","Liderança"],["visao_geral","Visão geral"],["altruista","Altruísta"],
+  ["autonomo","Autônomo"],["reativo","Reativo"],["pro-ativo","Pró-ativo"]
+];
+
+function escapeHtml(s){
+  return (s==null?"":String(s)).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function renderTrait(label, value){
+  const v = Number(value);
+  if(Number.isNaN(v)) return "";
+  const pct = Math.max(0, Math.min(100, ((v + 5) / 10) * 100));
+  return '<div class="trait">'+escapeHtml(label)+' ('+v+')<div class="bar"><span style="left:0;width:'+pct+'%"></span></div></div>';
+}
+
+function renderPerfil(p){
+  const traits = TRAIT_KEYS.map(([key,label]) => renderTrait(label, p[key])).join("");
+  return `
+    <div class="resultado">
+      <h3>${escapeHtml(p.nome)} <span class="badge ${p.aprovado ? 'ok':'no'}">${p.aprovado ? 'Aprovado' : 'Não aprovado'}</span></h3>
+      <div class="meta">CPF: ${escapeHtml(p.cpf)} · ${escapeHtml(p.cidade)}/${escapeHtml(p.uf)} · Avaliado em ${escapeHtml(p.data_avaliacao)}</div>
+      <div class="meta">Perfil: <strong>${escapeHtml(p.perfil_nome)}</strong> (${escapeHtml(p.perfil_codigo)})</div>
+      <div class="traits">${traits}</div>
+      <details>
+        <summary>Ver descrição completa do perfil</summary>
+        <div class="texto">${escapeHtml(p.perfil_descricao)}</div>
+      </details>
+      <details>
+        <summary>Ver estratégias de gerenciamento</summary>
+        <div class="texto">${escapeHtml(p.perfil_caracteristicas)}</div>
+      </details>
+    </div>
+  `;
+}
+
+function renderLocal(r){
+  const dp = r.dados_pessoais || {};
+  const respostas = (r.respostas || []).map(x => `#${x.pergunta_id}: ${x.resposta}`).join(", ");
+  return `
+    <div class="local-item">
+      <div class="meta"><strong>${escapeHtml(dp.nome_completo)}</strong> · ${escapeHtml(r.tipo_avaliacao)} · cod_cargo ${escapeHtml(r.cod_cargo)}</div>
+      <div class="meta">Enviado à Auto-Imagem: ${r.enviado_autoimagem ? 'Sim ✅' : 'Não ❌'} ${r.enviado_autoimagem_em ? '('+escapeHtml(r.enviado_autoimagem_em)+')' : ''}</div>
+      <details>
+        <summary>Ver respostas brutas (${(r.respostas||[]).length})</summary>
+        <div class="texto">${escapeHtml(respostas)}</div>
+      </details>
+      <details>
+        <summary>Ver log de sincronização</summary>
+        <div class="texto">${escapeHtml(JSON.stringify(r.resposta_autoimagem, null, 2))}</div>
+      </details>
+    </div>
+  `;
+}
+
+document.getElementById("formBusca").addEventListener("submit", async function(e){
+  e.preventDefault();
+  const statusEl = document.getElementById("statusMsg");
+  const resultadosEl = document.getElementById("resultados");
+  const btn = document.getElementById("btnBuscar");
+  const fd = new FormData(e.target);
+
+  const params = new URLSearchParams();
+  ["nome","cpf","email","telefone","cidade","uf","aprovado","data_ini","data_fim"].forEach(k=>{
+    const v = fd.get(k);
+    if(v) params.set(k, v);
+  });
+
+  if([...params.keys()].length === 0){
+    statusEl.textContent = "Informe pelo menos um filtro.";
+    statusEl.className = "status err";
+    return;
+  }
+
+  btn.disabled = true;
+  statusEl.textContent = "Buscando...";
+  statusEl.className = "status";
+  resultadosEl.innerHTML = "";
+
+  try{
+    const resp = await fetch(CONSULTA_URL + "?" + params.toString());
+    const json = await resp.json();
+
+    if(!json.success){
+      statusEl.textContent = json.message || "Erro na busca.";
+      statusEl.className = "status err";
+      btn.disabled = false;
+      return;
+    }
+
+    const perfis = (json.perfil_autoimagem && json.perfil_autoimagem.body && json.perfil_autoimagem.body.data) || [];
+    const locais = json.registros_locais || [];
+
+    statusEl.textContent = `${perfis.length} perfil(is) na Auto-Imagem · ${locais.length} registro(s) local(is).`;
+    statusEl.className = "status ok";
+
+    let html = "";
+    if(perfis.length){
+      html += '<div class="card"><h2>Perfis comportamentais (Auto-Imagem)</h2>' + perfis.map(renderPerfil).join("") + '</div>';
+    }
+    if(locais.length){
+      html += '<div class="card"><h2>Registros locais (Supabase)</h2>' + locais.map(renderLocal).join("") + '</div>';
+    }
+    if(!perfis.length && !locais.length){
+      html = '<div class="card"><p class="meta">Nenhum resultado encontrado.</p></div>';
+    }
+    resultadosEl.innerHTML = html;
+  }catch(err){
+    statusEl.textContent = "Erro ao buscar: " + err.message;
+    statusEl.className = "status err";
+  }
+  btn.disabled = false;
+});
+</script>
+</body>
+</html>

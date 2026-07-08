@@ -205,62 +205,22 @@
 
 <script>
 /* =========================================================
-   CONFIGURAÇÃO DA API — ajustar antes de publicar
+   CONFIGURAÇÃO — Supabase (armazenamento) + proxies da API oficial Auto-Imagem
    ========================================================= */
 const CONFIG = {
   apiEndpoint: "https://nyvudtxtwerwfvpirweu.supabase.co/rest/v1/avaliacoes",
   apiKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im55dnVkdHh0d2Vyd2Z2cGlyd2V1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1NDEwNjgsImV4cCI6MjA5OTExNzA2OH0.nP911y5wwK7Reaj0ebtIjKqNIPYT8CRSbI0Uf0r9I8I",
   tipoAvaliacao: "cargos_chave"
 };
+const AUTOIMAGEM_CARGOS_URL = "https://nyvudtxtwerwfvpirweu.supabase.co/functions/v1/autoimagem-cargos";
+const AUTOIMAGEM_PERGUNTAS_URL = "https://nyvudtxtwerwfvpirweu.supabase.co/functions/v1/autoimagem-perguntas";
 
-const CARGOS = [
-"ADVOGADO(a) TRABALHISTA e EMPRESARIAL","ANALISTA de AUDITORIA e COMPLIANCE","Analista de Comunicação Interna",
-"ANALISTA de CONTROLADORIA","ANALISTA de LOGÍSTICA e ADMINISTRAÇÃO","ANALISTA de MARKETING, COMUNICAÇÃO e VENDAS",
-"ANALISTA de PERFORMANCE HUMANA (DHO)","ANALISTA de RECRUTAMENTO e SELEÇÃO","ANALISTA de RELAÇÕES TRABALHISTAS (DP)",
-"ANALISTA de TESOURARIA","Assistente (a) de Recrutamento e Seleção","Assistente de Logística","ASSISTENTE de Projetos",
-"ASSISTENTE de Qualidade e Controles","ASSISTENTE de Qualidade em Saúde","ASSISTENTE de RELAÇÕES TRABALHISTAS",
-"Coordenador (a) de Recrutamento e Seleção","COORDENADOR (a) de RELAÇÕES TRABALHISTAS","Coordenador Administrativo e Logística",
-"COORDENADOR(A) DE OPERAÇÕES","COORDENADOR(A) de QUALIDADE e COMPLIANCE","COORDENADOR(A) de Saúde e Segurança do Trabalho",
-"COORDENADOR(a) Jurídico(a) Contencioso Trabalhista","DIRETOR(A) EXECUTIVA de GENTE e GESTÃO","DIRETOR(A) EXECUTIVO de NEGÓCIOS",
-"Engenheiro de Eficiência Operacional","ENGENHEIRO de SEGURANÇA do TRABALHO","ESPECIALISTA de QUALIDADE em SAÚDE",
-"EXECUTIVO(A) de VENDAS","Gerente 2","GERENTE DE DESENVOLVIMENTO HUMANO E PERFORMANCE (DHO)","Gerente de Recrutamento e Seleção",
-"Gerente de Relações Trabalhistas","GERENTE EXECUTIVO DE NEGÓCIOS","GERENTE FINANCEIRO E CONTROLADORIA","GERENTE REGIONAL DE OPERAÇÕES",
-"MÉDICO do TRABALHO","NUTRICIONISTA","SUPERVISOR de OPERAÇÕES","TÉCNICO em SEGURANÇA TRABALHO (CONTRATO)"
-];
-
-const BLOCOS = [
-  { nome:"Dominância (Foco em resultado e decisão)", itens:[
-    "Tomo decisões rapidamente, mesmo sob pressão.",
-    "Gosto de assumir o controle de situações difíceis.",
-    "Prefiro desafios diretos a tarefas rotineiras.",
-    "Costumo ser direto(a) ao dar feedback, mesmo que seja duro.",
-    "Sinto-me confortável competindo por resultados.",
-    "Tenho facilidade em impor limites quando necessário."
-  ]},
-  { nome:"Influência (Comunicação e relacionamento)", itens:[
-    "Gosto de conhecer e me relacionar com pessoas novas.",
-    "Consigo entusiasmar um grupo em torno de uma ideia.",
-    "Prefiro trabalhar em equipe a trabalhar sozinho(a).",
-    "Costumo ser otimista mesmo diante de dificuldades.",
-    "Tenho facilidade em negociar e persuadir os outros.",
-    "Sou visto(a) como alguém comunicativo(a) e sociável."
-  ]},
-  { nome:"Estabilidade (Consistência e cooperação)", itens:[
-    "Prefiro ambientes previsíveis e estáveis.",
-    "Tenho paciência para ouvir os outros até o fim.",
-    "Sigo rotinas e processos já estabelecidos com disciplina.",
-    "Evito conflitos diretos sempre que possível.",
-    "Sou leal e constante nos relacionamentos de trabalho.",
-    "Prefiro mudanças graduais a mudanças bruscas."
-  ]},
-  { nome:"Conformidade (Precisão e regras)", itens:[
-    "Presto muita atenção aos detalhes antes de concluir uma tarefa.",
-    "Gosto de seguir regras, normas e procedimentos claros.",
-    "Analiso dados e fatos antes de tomar uma decisão.",
-    "Sou exigente com a qualidade do meu próprio trabalho.",
-    "Prefiro ter tudo documentado e organizado.",
-    "Costumo revisar meu trabalho mais de uma vez."
-  ]}
+/* Filtro: quais cargos (da lista real da Auto-Imagem) aparecem neste formulário */
+const FILTRO_CARGOS = [
+"ADVOGADO","AUDITORIA","COMUNICAÇÃO INTERNA","CONTROLADORIA","LOGÍSTICA e ADMINISTRAÇÃO","MARKETING, COMUNICAÇÃO",
+"PERFORMANCE HUMANA","RECRUTAMENTO e SELEÇÃO","RELAÇÕES TRABALHISTAS","TESOURARIA","PROJETOS","QUALIDADE",
+"OPERAÇÕES","SAÚDE E SEGURANÇA","JURÍDICO","EXECUTIVA de GENTE","EXECUTIVO de NEGÓCIOS","EFICIÊNCIA OPERACIONAL",
+"SEGURANÇA do TRABALHO","VENDAS","GERENTE","MÉDICO do TRABALHO","NUTRICIONISTA","SUPERVISOR de OPERAÇÕES","TÉCNICO em SEGURANÇA"
 ];
 
 const ESCALA = [
@@ -271,45 +231,78 @@ const ESCALA = [
   {v:5,l:"Concordo totalmente"}
 ];
 
-function montarCargos(){
+let PERGUNTAS_CACHE = [];
+
+function normalizar(s){ return (s||"").toString().trim().toLowerCase(); }
+
+async function carregarCargos(){
   const sel = document.getElementById("cargo");
-  CARGOS.forEach(c=>{
-    const opt = document.createElement("option");
-    opt.value = c; opt.textContent = c;
-    sel.appendChild(opt);
-  });
+  sel.innerHTML = '<option value="">Carregando cargos...</option>';
+  try{
+    const resp = await fetch(AUTOIMAGEM_CARGOS_URL);
+    const json = await resp.json();
+    const todos = json.data || [];
+    const filtrados = todos.filter(c=>{
+      const nome = normalizar(c.cargo || c.descricao);
+      return FILTRO_CARGOS.some(f => nome.includes(normalizar(f)));
+    });
+    sel.innerHTML = '<option value="">Selecione</option>';
+    filtrados.forEach(c=>{
+      const opt = document.createElement("option");
+      opt.value = c.id;
+      opt.textContent = c.cargo || c.descricao;
+      sel.appendChild(opt);
+    });
+  }catch(err){
+    sel.innerHTML = '<option value="">Erro ao carregar cargos — recarregue a página</option>';
+  }
+}
+
+async function carregarPerguntas(idCargo){
+  const container = document.getElementById("itensContainer");
+  container.innerHTML = '<p style="color:var(--muted);font-size:.85rem">Carregando perguntas...</p>';
+  document.getElementById("btnEnviar").disabled = true;
+  try{
+    const resp = await fetch(AUTOIMAGEM_PERGUNTAS_URL + "?id_cargo=" + encodeURIComponent(idCargo));
+    const json = await resp.json();
+    PERGUNTAS_CACHE = json.data || [];
+    montarItens();
+    document.getElementById("btnEnviar").disabled = false;
+  }catch(err){
+    container.innerHTML = '<p style="color:var(--danger);font-size:.85rem">Erro ao carregar perguntas. Selecione o cargo novamente.</p>';
+  }
 }
 
 function montarItens(){
   const container = document.getElementById("itensContainer");
-  let idx = 0;
-  BLOCOS.forEach(bloco=>{
-    const tit = document.createElement("div");
-    tit.className = "bloco-titulo";
-    tit.textContent = bloco.nome;
-    container.appendChild(tit);
-    bloco.itens.forEach(texto=>{
-      idx++;
-      const div = document.createElement("div");
-      div.className = "likert-item";
-      const p = document.createElement("p");
-      p.textContent = idx + ". " + texto;
-      div.appendChild(p);
-      const scale = document.createElement("div");
-      scale.className = "likert-scale";
-      ESCALA.forEach(op=>{
-        const wrap = document.createElement("label");
-        wrap.className = "likert-opt";
-        wrap.innerHTML = '<input type="radio" name="item_'+idx+'" value="'+op.v+'" required><span>'+op.l+'</span>';
-        wrap.dataset.bloco = bloco.nome;
-        wrap.dataset.texto = texto;
-        scale.appendChild(wrap);
-      });
-      div.appendChild(scale);
-      container.appendChild(div);
+  container.innerHTML = "";
+  PERGUNTAS_CACHE.forEach((p, idx)=>{
+    const div = document.createElement("div");
+    div.className = "likert-item";
+    const pEl = document.createElement("p");
+    pEl.textContent = (idx+1) + ". " + p.pergunta;
+    div.appendChild(pEl);
+    const scale = document.createElement("div");
+    scale.className = "likert-scale";
+    ESCALA.forEach(op=>{
+      const wrap = document.createElement("label");
+      wrap.className = "likert-opt";
+      wrap.innerHTML = '<input type="radio" name="pergunta_'+p.id+'" value="'+op.v+'" required><span>'+op.l+'</span>';
+      scale.appendChild(wrap);
     });
+    div.appendChild(scale);
+    container.appendChild(div);
   });
 }
+
+document.getElementById("cargo").addEventListener("change", function(){
+  if(this.value) carregarPerguntas(this.value);
+  else{
+    PERGUNTAS_CACHE = [];
+    document.getElementById("itensContainer").innerHTML = '<p style="color:var(--muted);font-size:.85rem">Selecione um cargo acima para carregar as perguntas.</p>';
+    document.getElementById("btnEnviar").disabled = true;
+  }
+});
 
 /* Timer de 15 minutos */
 let segundosRestantes = 15*60;
@@ -327,24 +320,10 @@ const timerInterval = setInterval(()=>{
 },1000);
 
 function coletarRespostas(form){
-  const respostas = [];
-  BLOCOS.forEach(bloco=>{
-    bloco.itens.forEach((texto,i)=>{});
+  return PERGUNTAS_CACHE.map(p=>{
+    const campo = form.querySelector('input[name="pergunta_'+p.id+'"]:checked');
+    return { pergunta_id: p.id, resposta: campo ? Number(campo.value) : null };
   });
-  let idx = 0;
-  BLOCOS.forEach(bloco=>{
-    bloco.itens.forEach(texto=>{
-      idx++;
-      const campo = form.querySelector('input[name="item_'+idx+'"]:checked');
-      respostas.push({
-        id: idx,
-        bloco: bloco.nome,
-        pergunta: texto,
-        valor: campo ? Number(campo.value) : null
-      });
-    });
-  });
-  return respostas;
 }
 
 document.getElementById("formAvaliacao").addEventListener("submit", async function(e){
@@ -353,6 +332,13 @@ document.getElementById("formAvaliacao").addEventListener("submit", async functi
   const statusEl = document.getElementById("statusMsg");
   const btn = document.getElementById("btnEnviar");
   const fd = new FormData(form);
+  const cargoSelect = document.getElementById("cargo");
+
+  if(!PERGUNTAS_CACHE.length){
+    statusEl.textContent = "Selecione um cargo para carregar as perguntas antes de enviar.";
+    statusEl.className = "status err";
+    return;
+  }
 
   const dadosPessoais = {
     nome_completo: fd.get("nome_completo"),
@@ -360,7 +346,7 @@ document.getElementById("formAvaliacao").addEventListener("submit", async functi
     sexo: fd.get("sexo"),
     estado_civil: fd.get("estado_civil"),
     tipo_pessoa: fd.get("tipo_pessoa"),
-    cargo: fd.get("cargo"),
+    cargo: cargoSelect.options[cargoSelect.selectedIndex]?.textContent || "",
     cpf: fd.get("cpf"),
     telefone: fd.get("telefone"),
     cr: fd.get("cr"),
@@ -372,6 +358,7 @@ document.getElementById("formAvaliacao").addEventListener("submit", async functi
   const payload = {
     tipo_avaliacao: CONFIG.tipoAvaliacao,
     dados_pessoais: dadosPessoais,
+    cod_cargo: Number(fd.get("cargo")),
     respostas: coletarRespostas(form),
     situacoes: {
       situacao_1: fd.get("situacao_1"),
@@ -411,8 +398,9 @@ document.getElementById("formAvaliacao").addEventListener("submit", async functi
   }
 });
 
-montarCargos();
-montarItens();
+carregarCargos();
+document.getElementById("itensContainer").innerHTML = '<p style="color:var(--muted);font-size:.85rem">Selecione um cargo acima para carregar as perguntas.</p>';
+document.getElementById("btnEnviar").disabled = true;
 </script>
 </body>
 </html>

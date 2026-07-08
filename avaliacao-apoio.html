@@ -140,6 +140,7 @@
         <div class="field">
           <label for="cpf">Nº CPF <span class="required">*</span></label>
           <input type="text" id="cpf" name="cpf" required placeholder="000.000.000-00">
+          <p id="cpfAviso" style="font-size:.78rem;margin:6px 0 0;"></p>
         </div>
         <div class="field">
           <label for="telefone">Telefone <span class="required">*</span></label>
@@ -370,6 +371,25 @@ document.getElementById("formAvaliacao").addEventListener("submit", async functi
     btn.disabled = false;
   }
 });
+
+async function checarCpfExistente(){
+  const cpfInput = document.getElementById("cpf");
+  const aviso = document.getElementById("cpfAviso");
+  const digitos = (cpfInput.value || "").replace(/\D/g, "");
+  aviso.textContent = "";
+  if(digitos.length !== 11) return;
+  try{
+    const resp = await fetch("https://nyvudtxtwerwfvpirweu.supabase.co/functions/v1/autoimagem-consulta?cpf=" + digitos);
+    const json = await resp.json();
+    const registros = (json.perfil_autoimagem && json.perfil_autoimagem.body && json.perfil_autoimagem.body.data) || [];
+    if(registros.length){
+      const r = registros[0];
+      aviso.innerHTML = '⚠️ Já existe avaliação para este CPF na Auto-Imagem (' + (r.data_avaliacao || "data desconhecida") + '). O envio pode ser rejeitado como duplicado.';
+      aviso.style.color = "var(--danger)";
+    }
+  }catch(err){ /* checagem best-effort — não bloqueia o preenchimento */ }
+}
+document.getElementById("cpf").addEventListener("blur", checarCpfExistente);
 
 carregarCargos();
 document.getElementById("itensContainer").innerHTML = '<p style="color:var(--muted);font-size:.85rem">Selecione um cargo acima para carregar as perguntas.</p>';

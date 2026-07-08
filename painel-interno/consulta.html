@@ -142,19 +142,34 @@ function renderPerfil(p){
   `;
 }
 
+function mensagemAmigavelSync(r){
+  if(r.enviado_autoimagem){
+    return '<span style="color:var(--apoio-green)">Enviado com sucesso.</span>';
+  }
+  const corpo = r.resposta_autoimagem && r.resposta_autoimagem.body;
+  const msg = corpo && corpo.message;
+  if(msg){
+    return '<span style="color:var(--danger)">Não enviado: ' + escapeHtml(msg).replace(/\n/g,'<br>') + '</span>';
+  }
+  if(r.resposta_autoimagem && r.resposta_autoimagem.status){
+    return '<span style="color:var(--danger)">Não enviado (HTTP ' + escapeHtml(r.resposta_autoimagem.status) + ').</span>';
+  }
+  return '<span style="color:var(--muted)">Ainda não sincronizado.</span>';
+}
+
 function renderLocal(r){
   const dp = r.dados_pessoais || {};
   const respostas = (r.respostas || []).map(x => `#${x.pergunta_id}: ${x.resposta}`).join(", ");
   return `
     <div class="local-item">
       <div class="meta"><strong>${escapeHtml(dp.nome_completo)}</strong> · ${escapeHtml(r.tipo_avaliacao)} · cod_cargo ${escapeHtml(r.cod_cargo)}</div>
-      <div class="meta">Enviado à Auto-Imagem: ${r.enviado_autoimagem ? 'Sim ✅' : 'Não ❌'} ${r.enviado_autoimagem_em ? '('+escapeHtml(r.enviado_autoimagem_em)+')' : ''}</div>
+      <div class="meta">${mensagemAmigavelSync(r)} ${r.enviado_autoimagem_em ? '('+escapeHtml(r.enviado_autoimagem_em)+')' : ''}</div>
       <details>
         <summary>Ver respostas brutas (${(r.respostas||[]).length})</summary>
         <div class="texto">${escapeHtml(respostas)}</div>
       </details>
       <details>
-        <summary>Ver log de sincronização</summary>
+        <summary>Ver log técnico completo</summary>
         <div class="texto">${escapeHtml(JSON.stringify(r.resposta_autoimagem, null, 2))}</div>
       </details>
     </div>

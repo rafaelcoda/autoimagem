@@ -188,8 +188,8 @@
 
 <script>
 const CONFIG = {
-  apiEndpoint: "https://api.SEUDOMINIO.com.br/v1/avaliacoes",
-  apiKey: "SUBSTITUA_PELA_SUA_API_KEY",
+  apiEndpoint: "https://nyvudtxtwerwfvpirweu.supabase.co/rest/v1/avaliacoes",
+  apiKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im55dnVkdHh0d2Vyd2Z2cGlyd2V1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1NDEwNjgsImV4cCI6MjA5OTExNzA2OH0.nP911y5wwK7Reaj0ebtIjKqNIPYT8CRSbI0Uf0r9I8I",
   tipoAvaliacao: "apoio_operadores"
 };
 
@@ -341,7 +341,12 @@ document.getElementById("formAvaliacao").addEventListener("submit", async functi
   try{
     const resp = await fetch(CONFIG.apiEndpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + CONFIG.apiKey },
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": CONFIG.apiKey,
+        "Authorization": "Bearer " + CONFIG.apiKey,
+        "Prefer": "return=minimal"
+      },
       body: JSON.stringify(payload)
     });
     if(!resp.ok) throw new Error("HTTP "+resp.status);

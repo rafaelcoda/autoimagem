@@ -1,0 +1,51 @@
+{
+  "descricao": "Schema do payload JSON enviado via POST pelos 3 formulários de avaliação (avaliacao-cargos-chave.html, avaliacao-apoio.html, avaliacao-vendedor.html) para a API do Grupo Apoio.",
+  "endpoint_sugerido": "POST https://api.SEUDOMINIO.com.br/v1/avaliacoes",
+  "headers": {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer {API_KEY}"
+  },
+  "tipos_avaliacao": ["cargos_chave", "apoio_operadores", "vendedor"],
+  "payload": {
+    "tipo_avaliacao": "string — um dos valores em tipos_avaliacao",
+    "dados_pessoais": {
+      "nome_completo": "string",
+      "data_nascimento": "string (YYYY-MM-DD)",
+      "sexo": "masculino | feminino | outros | prefiro_nao_dizer",
+      "estado_civil": "solteiro | casado | divorciado | viuvo | uniao_estavel",
+      "tipo_pessoa": "candidato | colaborador",
+      "cargo": "string",
+      "cpf": "string",
+      "telefone": "string",
+      "cr": "string (opcional)",
+      "email": "string",
+      "cidade": "string",
+      "uf": "string (2 letras)"
+    },
+    "respostas": [
+      {
+        "id": "number — ordem sequencial do item",
+        "bloco": "string — nome do bloco/dimensão avaliada",
+        "pergunta": "string — texto da afirmação",
+        "valor": "number 1 a 5 (escala Likert: 1=Discordo totalmente, 5=Concordo totalmente)"
+      }
+    ],
+    "situacoes": {
+      "descricao": "presente apenas em avaliacao-cargos-chave.html",
+      "situacao_1": "string — resposta discursiva",
+      "situacao_2": "string — resposta discursiva"
+    },
+    "situacao_vendas": "string — presente apenas em avaliacao-vendedor.html, resposta discursiva à situação hipotética de vendas",
+    "metadata": {
+      "aceite_termos": "boolean",
+      "tempo_restante_segundos": "number — tempo restante do limite de 15 min no momento do envio",
+      "enviado_em": "string (ISO 8601)",
+      "origem": "string fixa: form-clone-grupo-apoio"
+    }
+  },
+  "observacoes": [
+    "Os blocos de perguntas comportamentais usados aqui são um modelo genérico inspirado em DISC, criado porque as perguntas reais das avaliações Auto-Imagem ficam atrás de uma etapa em JavaScript (botão Avançar) que não foi possível renderizar nesta sessão.",
+    "Para clonar fielmente o banco de perguntas original, será necessário fornecer prints/PDF do conteúdo pós-Avançar de cada uma das 3 avaliações, e então substituir o array BLOCOS em cada arquivo HTML.",
+    "As cores e o logo usados nos formulários são placeholders — substituir pelas cores oficiais e pelo arquivo de logo do Grupo Apoio antes de publicar."
+  ]
+}

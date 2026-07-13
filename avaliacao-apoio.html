@@ -395,5 +395,46 @@ carregarCargos();
 document.getElementById("itensContainer").innerHTML = '<p style="color:var(--muted);font-size:.85rem">Selecione um cargo acima para carregar as perguntas.</p>';
 document.getElementById("btnEnviar").disabled = true;
 </script>
+<script>
+  // ── PRÉ-PREENCHIMENTO via URL params ──────────────────────────────────────
+  (function() {
+    var p = new URLSearchParams(window.location.search);
+    function set(id, val) {
+      var el = document.getElementById(id);
+      if (el && val) el.value = val;
+    }
+    function setRadio(name, val) {
+      var el = document.querySelector('input[name="' + name + '"][value="' + val + '"]');
+      if (el) el.checked = true;
+    }
+    function setSelect(name, val) {
+      var el = document.querySelector('select[name="' + name + '"]');
+      if (el && val) {
+        // Tenta por value exato, depois por text parcial
+        var opt = Array.from(el.options).find(function(o){ return o.value === val; });
+        if (!opt) opt = Array.from(el.options).find(function(o){ return o.textContent.toLowerCase().includes(val.toLowerCase()); });
+        if (opt) el.value = opt.value;
+      }
+    }
+
+    if (p.get('nome'))            set('nome', p.get('nome'));
+    if (p.get('data_nascimento')) set('nascimento', p.get('data_nascimento'));
+    if (p.get('cpf'))             set('cpf', p.get('cpf').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'));
+    if (p.get('email'))           set('email', p.get('email'));
+    if (p.get('telefone') || p.get('celular')) {
+      var tel = p.get('telefone') || p.get('celular');
+      tel = tel.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+      set('telefone', tel);
+    }
+    if (p.get('cidade'))          set('cidade', p.get('cidade'));
+    if (p.get('uf'))              set('uf', p.get('uf'));
+    if (p.get('cr'))              set('cr', p.get('cr'));
+    if (p.get('sexo'))            setRadio('sexo', p.get('sexo'));
+    if (p.get('estado_civil'))    setSelect('estado_civil', p.get('estado_civil'));
+    if (p.get('tipo_pessoa'))     setRadio('tipo_pessoa', p.get('tipo_pessoa') || 'candidato');
+    else                          setRadio('tipo_pessoa', 'candidato'); // padrão
+  })();
+  // ─────────────────────────────────────────────────────────────────────────
+</script>
 </body>
 </html>

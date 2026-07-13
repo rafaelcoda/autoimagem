@@ -399,40 +399,64 @@ document.getElementById("btnEnviar").disabled = true;
   // ── PRÉ-PREENCHIMENTO via URL params ──────────────────────────────────────
   (function() {
     var p = new URLSearchParams(window.location.search);
-    function set(id, val) {
+    function set(id, val, lock) {
       var el = document.getElementById(id);
-      if (el && val) el.value = val;
+      if (el && val) {
+        el.value = val;
+        if (lock) {
+          el.readOnly = true;
+          el.style.background = '#f0f0f0';
+          el.style.cursor = 'not-allowed';
+          el.style.color = '#555';
+        }
+      }
     }
-    function setRadio(name, val) {
-      var el = document.querySelector('input[name="' + name + '"][value="' + val + '"]');
-      if (el) el.checked = true;
+    function setRadio(name, val, lock) {
+      var els = document.querySelectorAll('input[name="' + name + '"]');
+      els.forEach(function(el) {
+        if (el.value === val) el.checked = true;
+        if (lock) {
+          el.disabled = true;
+          el.style.cursor = 'not-allowed';
+        }
+      });
     }
-    function setSelect(name, val) {
+    function setSelect(name, val, lock) {
       var el = document.querySelector('select[name="' + name + '"]');
       if (el && val) {
-        // Tenta por value exato, depois por text parcial
         var opt = Array.from(el.options).find(function(o){ return o.value === val; });
         if (!opt) opt = Array.from(el.options).find(function(o){ return o.textContent.toLowerCase().includes(val.toLowerCase()); });
-        if (opt) el.value = opt.value;
+        if (opt) {
+          el.value = opt.value;
+          if (lock) {
+            el.disabled = true;
+            el.style.background = '#f0f0f0';
+            el.style.cursor = 'not-allowed';
+          }
+        }
       }
     }
 
-    if (p.get('nome'))            set('nome', p.get('nome'));
-    if (p.get('data_nascimento')) set('nascimento', p.get('data_nascimento'));
-    if (p.get('cpf'))             set('cpf', p.get('cpf').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'));
-    if (p.get('email'))           set('email', p.get('email'));
-    if (p.get('telefone') || p.get('celular')) {
-      var tel = p.get('telefone') || p.get('celular');
-      tel = tel.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-      set('telefone', tel);
-    }
-    if (p.get('cidade'))          set('cidade', p.get('cidade'));
-    if (p.get('uf'))              set('uf', p.get('uf'));
-    if (p.get('cr'))              set('cr', p.get('cr'));
-    if (p.get('sexo'))            setRadio('sexo', p.get('sexo'));
-    if (p.get('estado_civil'))    setSelect('estado_civil', p.get('estado_civil'));
-    if (p.get('tipo_pessoa'))     setRadio('tipo_pessoa', p.get('tipo_pessoa') || 'candidato');
-    else                          setRadio('tipo_pessoa', 'candidato'); // padrão
+    var nome = p.get('nome');
+    var nasc = p.get('data_nascimento');
+    var cpf  = p.get('cpf');
+    var email= p.get('email');
+    var tel  = p.get('celular') || p.get('telefone');
+    var cid  = p.get('cidade');
+    var uf   = p.get('uf');
+    var cr   = p.get('cr');
+
+    if (nome)  set('nome', nome, true);
+    if (nasc)  set('nascimento', nasc, true);
+    if (cpf)   set('cpf', cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'), true);
+    if (email) set('email', email, true);
+    if (tel)   set('telefone', tel.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3'), true);
+    if (cid)   set('cidade', cid, true);
+    if (uf)    set('uf', uf, true);
+    if (cr)    set('cr', cr, false); // cr não bloqueia
+
+    // tipo_pessoa sempre candidato e bloqueado
+    setRadio('tipo_pessoa', p.get('tipo_pessoa') || 'candidato', true);
   })();
   // ─────────────────────────────────────────────────────────────────────────
 </script>
